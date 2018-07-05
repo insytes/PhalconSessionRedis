@@ -5,7 +5,6 @@ namespace Aliene\Phalcon\Session;
 use Phalcon\Session\AdapterInterface;
 
 /**
- * @author Marcel Hernandez
  * @author Ian Brindley
  */
 class Redis extends \SessionHandler implements AdapterInterface
@@ -22,7 +21,10 @@ class Redis extends \SessionHandler implements AdapterInterface
      */
     const MAX_WAIT_TIME = 128000;
 
-    const DEFAULT_OPTS = [
+    /**
+     * Default options
+     */
+    const DEFAULT_OPTIONS = [
         "host" => "localhost",
         "port" => 6379,
         "auth" => null,
@@ -38,6 +40,11 @@ class Redis extends \SessionHandler implements AdapterInterface
      */
     private $redis;
 
+    /**
+     * User defined options derived from self::DEFAULT_OPTIONS
+     *
+     * @var mixed[]
+     */
     private $options = [];
 
     /**
@@ -45,26 +52,14 @@ class Redis extends \SessionHandler implements AdapterInterface
      * session can remain locked. This is only meant
      * as a last resort releasing mechanism if for an
      * unknown reason the PHP engine never
-     * calls RedisSessionHandler::close().
+     * calls Aliene\Phalcon\Session\Redis::close().
      *
-     * $lock_ttl is set to the 'max_execution_time'
+     * $timeout is set to the 'max_execution_time'
      * runtime configuration value.
      *
      * @var int
      */
-    private $lock_ttl;
-
-    /**
-     * The maximum number of seconds that a session
-     * will be kept in Redis before it is considered stale
-     * and expires.
-     *
-     * $session_ttl is set to the 'session.gc_maxlifetime'
-     * runtime configuration value.
-     *
-     * @var int
-     */
-    private $session_ttl;
+    private $timeout;
 
     /**
      * A collection of every session ID that has been generated
@@ -106,8 +101,7 @@ class Redis extends \SessionHandler implements AdapterInterface
         $this->setOptions(array_replace_recursive(self::DEFAULT_OPTS, $options));
 
         $this->redis = new \Redis();
-        $this->lock_ttl = (int) ini_get('max_execution_time');
-        $this->session_ttl = (int) ini_get('session.gc_maxlifetime');
+        $this->timeout = (int) ini_get("max_execution_time");
 
         ini_set("session.serialize_handler", "php_serialize");
         session_set_save_handler($this, true);
@@ -207,7 +201,7 @@ class Redis extends \SessionHandler implements AdapterInterface
     {
         $this->cookieName = $name;
 
-        if (false === $this->redis->connect($this->getOption("host"), $this->getOption("port"), $this->getOption("lifetime"))) {
+        if (false === $this->redis->connect($this->getOption("host"), $this->getOption("port"), $this->timeout)) {
             return false;
         }
 
@@ -268,7 +262,7 @@ class Redis extends \SessionHandler implements AdapterInterface
     public function write($session_id, $session_data)
     {
         // $session_data = json_encode(\unserialize($session_data));
-        return true === $this->redis->setex($session_id, $this->session_ttl, $session_data);
+        return true === $this->redis->setex($session_id, $this->getOption("lifetime"), $session_data);
     }
 
     /**
@@ -311,8 +305,8 @@ class Redis extends \SessionHandler implements AdapterInterface
     private function acquireLockOn($session_id)
     {
         $options = ['nx'];
-        if (0 < $this->lock_ttl) {
-            $options = ['nx', 'ex' => $this->lock_ttl];
+        if (0 < $this->timeout) {
+            $options = ['nx', 'ex' => $this->timeout];
         }
 
         $wait = self::MIN_WAIT_TIME;
