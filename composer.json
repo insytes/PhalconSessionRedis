@@ -1,5 +1,5 @@
 {
-    "name": "aliene/phalcon-session",
+    "name": "aliene/phalcon-session-redis",
     "description": "An alternative Redis session handler for Phalon PHP",
     "type": "library",
     "license": "MIT",
