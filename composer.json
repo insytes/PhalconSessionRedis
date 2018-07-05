@@ -1,6 +1,6 @@
 {
     "name": "aliene/phalcon-session-redis",
-    "description": "An alternative Redis session handler for Phalon PHP",
+    "description": "An alternative Redis session handler for Phalcon PHP",
     "type": "library",
     "license": "MIT",
     "require": {
