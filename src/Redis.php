@@ -98,7 +98,7 @@ class Redis extends \SessionHandler implements AdapterInterface
             throw new \RuntimeException("the 'redis' extension is needed in order to use this session handler");
         }
 
-        $this->setOptions(array_replace_recursive(self::DEFAULT_OPTS, $options));
+        $this->setOptions($options);
 
         $this->redis = new \Redis();
         $this->timeout = (int) ini_get("max_execution_time");
@@ -114,7 +114,7 @@ class Redis extends \SessionHandler implements AdapterInterface
      
     public function getOptions ()
     {
-        return $this->options;
+        return array_replace_recursive(self::DEFAULT_OPTIONS, $this->options);
     }
 
     public function getOption($option, $defaultValue = "")

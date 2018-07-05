@@ -24,8 +24,6 @@ $session = new \Aliene\Phalcon\Session\Redis([
 
 $session->start();
 
-var_dump($session->get("visits"));
-
 if (!$session->has('visits')) {
     $session->set('visits', 0);
 }
