@@ -1,38 +1,33 @@
 # RedisSessionHandler
 
-[![Build Status](https://scrutinizer-ci.com/g/1ma/RedisSessionHandler/badges/build.png?b=master)](https://scrutinizer-ci.com/g/1ma/RedisSessionHandler/build-status/master) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/1ma/RedisSessionHandler/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/1ma/RedisSessionHandler/?branch=master) [![Latest Stable Version](https://poser.pugx.org/uma/redis-session-handler/v/stable)](https://packagist.org/packages/uma/redis-session-handler) [![Monthly Downloads](https://poser.pugx.org/uma/redis-session-handler/d/monthly)](https://packagist.org/packages/uma/redis-session-handler)
+[![Build Status](https://scrutinizer-ci.com/g/ianbrind/PhaconSessionRedis/badges/build.png?b=master)](https://scrutinizer-ci.com/g/ianbrind/PhalconSessionRedis/build-status/master) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/ianbrind/PhalconSessionRedis/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/ianbrind/PhalconRessionRedis/?branch=master) [![Latest Stable Version](https://poser.pugx.org/aliene/phalcon-session-redis/v/stable)](https://packagist.org/packages/aliene/phalcon-session-redis) [![Monthly Downloads](https://poser.pugx.org/aliene/phalcon-session-redis/d/monthly)](https://packagist.org/packages/aliene/phalcon-session-redis)
 
-An alternative Redis session handler featuring session locking and session fixation protection.
+An alternative Redis session handler for Phalcon PHP featuring session locking and session fixation protection.
 
 
 ## Installation
 
-RedisSessionHandler requires PHP >=5.6 with the phpredis extension enabled and a Redis >=2.6 endpoint. Add [`uma/redis-session-handler`](https://packagist.org/packages/uma/redis-session-handler) to the `composer.json` file:
+PhalconSessionRedis requires PHP >=5.6 with the phpredis extension enabled and a Redis >=2.6 endpoint. Add [`aliene/phalcon-session-redis`](https://packagist.org/packages/aliene/phalcon-session-redis) to the `composer.json` file:
 
-    $ composer require uma/redis-session-handler
+    $ composer require aliene/phalcon-session-redis
 
-Overwrite the default session handler with `UMA\RedisSessionHandler` before your application calls
-any `session_` function. If you are using a framework and unsure when or where that happens, a
-good rule of thumb is "as early as possible". A safe bet might be the frontend controller in the
-public directory of the project or an equivalent initialization script.
+## Example
 
 ```php
-// top of my-project/web/app.php
+// services.php
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-session_set_save_handler(new \UMA\RedisSessionHandler(), true);
-```
+$di->set("session", function() {
+    $session = new \Aliene\Phalcon\Session\Redis([
+        "host" => "localhost",
+        "auth" => "password",
+        "lifetime" => 3600 // ttl 1 hour
+    ]);
 
-Note that calling `session_set_save_handler` overwrites any value you might have set in the `session.save_handler` option
-of the php.ini file, so you don't need to change that. However, RedisSessionHandler still uses `session.save_path` to find
-the Redis server, just like the vanilla phpredis session handler:
+    $session->start();
+});
 
-```ini
-; examples
-session.save_path = "localhost"
-session.save_path = "localhost?timeout=2.5"
-session.save_path = "tcp://1.2.3.4:5678?prefix=APP_SESSIONS:&database=2"
 ```
 
 Available query params:
@@ -47,7 +42,7 @@ Currently only a single host definition is supported.
 
 ## Known Caveats
 
-### Using RedisSessionHandler with the `max_execution_time` directive set to `0` is not recommended
+### Using PhalconSessionRedis with the `max_execution_time` directive set to `0` is not recommended
 
 Whenever it can, the handler uses the `max_execution_time` directive as a hard timeout for the session lock. This is a
 last resort mechanism to release the session lock even if the PHP process crashes and the handler fails to do it itself.
@@ -57,19 +52,19 @@ must be kept for as long as it takes to run the script, which is an unknown amou
 the PHP process crashes and the handler fails to release the lock there would be no safety net and you'd end up with a dangling lock
 that you'd have to detect and purge by other means.
 
-So when using RedisSessionHandler it is advised _not_ to disable `max_execution_time`.
+So when using PhalconSessionRedis it is advised _not_ to disable `max_execution_time`.
 
 
-### RedisSessionHandler does not support `session.use_trans_sid=1` nor `session.use_cookies=0`
+### PhalconRessionRedis does not support `session.use_trans_sid=1` nor `session.use_cookies=0`
 
 When these directives are set this way PHP switches from using cookies to passing the session ID around as a query param.
 
-RedisSessionHandler cannot work in this mode. _This is by design_.
+PhalconSessionRedis cannot work in this mode. _This is by design_.
 
 
-### RedisSessionHandler ignores the `session.use_strict_mode` directive
+### PhalconSessionRedis ignores the `session.use_strict_mode` directive
 
-Because running PHP with strict mode disabled (which is the default!) does not make any sense whatsoever. RedisSessionHandler
+Because running PHP with strict mode disabled (which is the default!) does not make any sense whatsoever. PhalconSessionRedis
 only works in strict mode. The _Session fixation_ section of this README explains what that means.
 
 
