@@ -107,28 +107,50 @@ class Redis extends \SessionHandler implements AdapterInterface
         session_set_save_handler($this, true);
     }
     
+    /**
+     * {@inheritdoc}
+     */
     public function setOptions (array $options)
     {
         $this->options = array_replace_recursive($this->getOptions(), $options);
     }
-     
+
+    /**
+     * {@inheritdoc}
+     */
     public function getOptions ()
     {
         return array_replace_recursive(self::DEFAULT_OPTIONS, $this->options);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getOption($option, $defaultValue = "")
     {
         return $this->options[$option] ?: $defaultValue;
     } 
 
+    /**
+     * {@inheritdoc}
+     */
     public function get($index, $defaultValue = "")
     {
         return $_SESSION[$index] ?: $defaultValue;
     }
 
-    public function remove($index) {}
+    /**
+     * {@inheritdoc}
+     */
+    public function remove($index)
+    {
+        unset($_SESSION[$index]);
+        return $this;
+    }
 
+    /**
+     * {@inheritdoc}
+     */
     public function set($index, $data)
     {
         $_SESSION[$index] = $data;
@@ -152,7 +174,8 @@ class Redis extends \SessionHandler implements AdapterInterface
 	 * @return boolean `true` if session successfully started
 	 *         (or has already been started), `false` otherwise.
 	 */
-    public function start () {
+    public function start ()
+    {
         if ($this->isStarted()) {
 			return true;
 		}
@@ -160,6 +183,9 @@ class Redis extends \SessionHandler implements AdapterInterface
 		return session_start();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function has ($index)
     {
         if (!$this->isStarted() && !$this->start()) {
@@ -169,6 +195,9 @@ class Redis extends \SessionHandler implements AdapterInterface
 		return isset($_SESSION[$index]);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getId () {}
         
     /**
@@ -186,12 +215,19 @@ class Redis extends \SessionHandler implements AdapterInterface
         return isset($_SESSION) && session_id();
     }
 
-    public function regenerateId ($deleteOldSession  = false) {
-
-    }
-                
+    /**
+     * {@inheritdoc}
+     */
+    public function regenerateId ($deleteOldSession = false) {}
+    
+    /**
+     * {@inheritdoc}
+     */
     public function setName ($name) {}
-        
+    
+    /**
+     * {@inheritdoc}
+     */
     public function getName () {}
 
     /**
