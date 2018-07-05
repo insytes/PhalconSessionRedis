@@ -30,10 +30,12 @@ $di->set("session", function() {
 
 ```
 
-Available query params:
+Available options:
 
-* `timeout` (float), default `0.0`, which means unlimited timeout
-* `prefix` (string), default `'PHPREDIS_SESSION:'`
+* `host` (string) default `"localhost"`
+* `port` (int) default `6379`
+* `lifetime` (int), default `3600`, The session lifetime (ttl)
+* `prefix` (string), default `'SESSIONS:'`
 * `auth` (string), default `null`
 * `database` (int), default `0`
 
