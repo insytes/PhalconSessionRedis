@@ -1,0 +1,39 @@
+{
+    "name": "aliene/phalcon-session",
+    "description": "An alternative Redis session handler for Phalon PHP",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": ">=5.6",
+        "ext-redis": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Aliene\\Phalcon\\Session\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Aliene\\RedisSessions\\Tests\\E2E\\": "tests/e2e",
+            "Aliene\\RedisSessions\\Tests\\Unit\\": "tests/unit"
+        }
+    },
+    "require-dev": {
+        "guzzlehttp/guzzle": "^6.3",
+        "phpunit/phpunit": "^7.0"
+    },
+    "scripts": {
+        "env-up": [
+            "@composer install --ignore-platform-reqs",
+            "docker-compose -f tests/docker-compose.yml up -d"
+        ],
+        "env-rm": "docker-compose -f tests/docker-compose.yml down -v",
+        "test": [
+            "@env-up",
+            "docker exec -t tests_runner_1 sh -c \"TARGET=php56 vendor/bin/phpunit --testdox\"",
+            "docker exec -t tests_runner_1 sh -c \"TARGET=php70 vendor/bin/phpunit --testdox\"",
+            "docker exec -t tests_runner_1 sh -c \"TARGET=php71 vendor/bin/phpunit --testdox\"",
+            "docker exec -t tests_runner_1 sh -c \"TARGET=php72 vendor/bin/phpunit --testdox\""
+        ]
+    }
+}
