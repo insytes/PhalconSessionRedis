@@ -19,15 +19,36 @@ if (isset($_GET['with_no_time_limit'])) {
 $session = new \Aliene\Phalcon\Session\Redis([
     "host" => "46.101.72.243",
     "auth" => "1CF2A06FB081610F55539FFEA52DAD687E5893BA0A167D155D4EA5F8A338FD2A",
-    "lifetime" => 10000
+    "lifetime" =>20
 ]);
 
 $session->start();
 
-if (!$session->has('visits')) {
-    $session->set('visits', 0);
+echo session_name();
+echo session_id();
+
+$session->serializer("foo");
+
+if (!$session->has("auth")) {
+    $session->set("auth", true);
+    echo "Not authenticated!";
+
+    if ($session->has("refresh_token")) {
+
+    }
+} else {
+
+    if (!$session->has('visits')) {
+        $session->set('visits', 0);
+    }
+    
+    // $session->incr("visits");
+    ++$_SESSION["visits"];
+    echo $session->get("visits");
+
 }
 
-// $session->incr("visits");
-++$_SESSION["visits"];
-echo $session->get("visits");
+if ($session->get("visits") > 5) {
+    echo "destroy";
+    $session->destroy();
+}

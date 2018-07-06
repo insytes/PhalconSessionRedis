@@ -30,7 +30,11 @@ class Redis extends \SessionHandler implements AdapterInterface
         "auth" => null,
         "lifetime" => 3600,
         "database" => 0,
-        "prefix" => "SESSIONS:"
+        "secret" => "secret",
+        "prefix" => "SESSIONS:",
+        "serializer" => "json_encode",
+        "unserializer" => __CLASS__ . "::jsonDecodeArray",
+        "id_mutator" => __CLASS__ . "::idMutator"
     ];
 
     /**
@@ -87,7 +91,7 @@ class Redis extends \SessionHandler implements AdapterInterface
      *
      * @var string
      */
-    private $cookieName;
+    private $cookieName = "PHPSESSID";
 
     /**
      * @throws \RuntimeException When the phpredis extension is not available.
@@ -105,6 +109,31 @@ class Redis extends \SessionHandler implements AdapterInterface
 
         ini_set("session.serialize_handler", "php_serialize");
         session_set_save_handler($this, true);
+    }
+
+    public static function idMutator ($id)
+    {   
+        return $id;
+    }
+
+    public static function jsonDecodeArray ($data)
+    {
+        return json_decode($data, true);
+    }
+
+    public function serializer ()
+    { 
+        return call_user_func_array($this->getOption("serializer"), func_get_args());
+    }
+    
+    public function unserializer ()
+    {
+        return call_user_func_array($this->unserializer, func_get_args());
+    }
+    
+    function id_mutator ()
+    {
+        return call_user_func_array($this->id_mutator, func_get_args());
     }
     
     /**
@@ -178,8 +207,8 @@ class Redis extends \SessionHandler implements AdapterInterface
     {
         if ($this->isStarted()) {
 			return true;
-		}
-		session_cache_limiter();
+        }
+        
 		return session_start();
     }
 
@@ -198,7 +227,10 @@ class Redis extends \SessionHandler implements AdapterInterface
     /**
      * {@inheritdoc}
      */
-    public function getId () {}
+    public function getId ()
+    {
+        return session_id();
+    }
         
     /**
 	 * Obtain the status of the session.
@@ -237,7 +269,7 @@ class Redis extends \SessionHandler implements AdapterInterface
     {
         $this->cookieName = $name;
 
-        if (false === $this->redis->connect($this->getOption("host"), $this->getOption("port"), $this->timeout)) {
+        if (false === $this->redis->connect($this->getOption("host"), $this->getOption("port"))) {
             return false;
         }
 
@@ -289,7 +321,7 @@ class Redis extends \SessionHandler implements AdapterInterface
             return '';
         }
 
-        return ($this->redis->get($session_id));
+        return $this->redis->get($session_id);
     }
 
     /**
@@ -297,8 +329,10 @@ class Redis extends \SessionHandler implements AdapterInterface
      */
     public function write($session_id, $session_data)
     {
-        // $session_data = json_encode(\unserialize($session_data));
-        return true === $this->redis->setex($session_id, $this->getOption("lifetime"), $session_data);
+        if (!$this->mustRegenerate($session_id)) {
+            return $this->redis->setex($session_id, $this->getOption("lifetime"), $session_data);
+        }
+        return true;
     }
 
     /**
@@ -306,6 +340,10 @@ class Redis extends \SessionHandler implements AdapterInterface
      */
     public function destroy($session_id = null)
     {
+        if (!$session_id) {
+            $session_id = $this->getId();
+        }
+
         $this->redis->del($session_id);
         $this->redis->del("{$session_id}_lock");
 
